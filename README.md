@@ -221,4 +221,25 @@ integrity.
    develop LLM apps and agents, learning best practices for app modernization with AI-assisted dev tools, learning the
    latest in Java frameworks, security, and quite a bit more:
 
+### Image Screenshots
+
+Login Page
+
+![Login Page](img/login.png "Login Page")
+
+Signin Page
+
+![Signin Page](img/signin.png "Signin Page")
+
+Success Page
+
+![Success Page](img/success.png "Success Page")
+
+Passkey Page
+![Passkey Page](img/passkey1.png "Passkey Page")
+
+WebAuthn Page
+
+![WebAuthn Page](img/webauth.png "WebAuthn Page")
+
 
