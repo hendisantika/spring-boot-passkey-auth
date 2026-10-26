@@ -1,227 +1,213 @@
 # spring-boot-passkey-auth
 
-Integrating Passkeys into Spring Security
+[![Java CI with Maven](https://github.com/hendisantika/spring-boot-passkey-auth/actions/workflows/maven.yml/badge.svg)](https://github.com/hendisantika/spring-boot-passkey-auth/actions/workflows/maven.yml)
+![Java](https://img.shields.io/badge/Java-25-orange?logo=openjdk)
+![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.1.2-brightgreen?logo=springboot)
+![Spring Security](https://img.shields.io/badge/Spring%20Security-7.1-brightgreen?logo=springsecurity)
+![Dependabot](https://img.shields.io/badge/Dependabot-enabled-blue?logo=dependabot)
 
-1. Introduction
-   Login forms have long been, and still are, a common feature of any web service that requires authentication to
-   provide its services. However, as security concerns started to become mainstream, it became clear that simple text
-   passwords are a weak spot: they can be guessed, intercepted, or leaked, leading to security incidents that can result
-   in financial and/or reputation damage.
+Integrating Passkeys (WebAuthn) into Spring Security.
 
-   Previous attempts to replace passwords with alternative solutions (mTLS, security cards, etc) tried to address this
-   issue but led to poor user experience and additional costs.
+## Tech Stack
 
-   In this tutorial, we’ll explore Passkeys, also known as WebAuthn, a standard that provides a secure alternative to
-   passwords. In particular, we’ll demonstrate how to quickly add support for this authentication mechanism to a Spring
-   Boot application with Spring Security.
+| Component        | Version                          |
+|------------------|----------------------------------|
+| Java             | 25                               |
+| Spring Boot      | 4.1.2                            |
+| Spring Security  | 7.1.x (incl. `spring-security-webauthn`) |
+| WebAuthn4J       | 0.31.11.RELEASE                  |
+| Build tool       | Maven (wrapper included)         |
 
-2. What Is a Passkey?
-   Passkeys or WebAuthn is a standard API defined by the W3C Consortium that allows applications running on a Web
-   Browser to manage public keys and register them for use with a given service provider.
+## Requirements
 
-   The typical registration scenario goes like this:
+- JDK 25 (e.g. [Eclipse Temurin](https://adoptium.net/) 25)
+- No local Maven install needed — use the bundled `./mvnw` wrapper
+- A browser/OS with passkey support (Chrome, Safari, Edge, Firefox; Touch ID, Windows Hello, Android, a security key, ...)
 
-   The user creates a new account on the service. The initial credentials are usually the familiar username/password
-   Once registered, the user goes to his profile page and selects “create passkey”
-   The system displays a passkey registration form
-   The user fills the form with the required information – e.g. the key label that will help the user select the right
-   key later – and submits it
-   The system saves the passkey in its database and associates it with the user account. At the same time, a private
-   part of this key will be saved on the user’s device
-   The passkey registration is complete
-   Once key registration is completed, the user can use the stored passkey to access the service. Depending on the
-   security configuration of the browser and the user’s device, the login will require a fingerprint scan, unlocking a
-   smartphone, or similar action.
+## Getting Started
 
-   A passkey consists of two parts: the public key that the browser sends to the service provider and a private part
-   that remains on the local device.
+```shell
+git clone https://github.com/hendisantika/spring-boot-passkey-auth.git
+cd spring-boot-passkey-auth
 
-   Moreover, the client-side API’s implementation ensures that a given passkey is usable only with the same site that
-   registered it.
+# build & run tests
+./mvnw clean verify
 
-3. Adding Passkeys to Spring Boot Applications
-   Let’s create a simple Spring Boot application to test passkeys. Our application will have just a welcome page that
-   displays the name of the current user and a link to the passkey registration page.
+# run the application
+./mvnw spring-boot:run
+```
 
-The first step is to add the required dependencies to the project:
+Open http://localhost:8080 and log in with the demo user:
+
+| Username | Password |
+|----------|----------|
+| `yuji`   | `1234`   |
+
+Then register a passkey at http://localhost:8080/webauthn/register, log out (http://localhost:8080/logout) and
+sign in again using **Sign in with a passkey**.
+
+> [!NOTE]
+> Users and passkeys are kept in memory, so registered passkeys are lost when the application restarts.
+
+## 1. Introduction
+
+Login forms have long been, and still are, a common feature of any web service that requires authentication to provide
+its services. However, as security concerns started to become mainstream, it became clear that simple text passwords are
+a weak spot: they can be guessed, intercepted, or leaked, leading to security incidents that can result in financial
+and/or reputation damage.
+
+Previous attempts to replace passwords with alternative solutions (mTLS, security cards, etc.) tried to address this
+issue but led to poor user experience and additional costs.
+
+In this project, we explore Passkeys, also known as WebAuthn, a standard that provides a secure alternative to
+passwords, and show how to add support for this authentication mechanism to a Spring Boot application with Spring
+Security.
+
+## 2. What Is a Passkey?
+
+Passkeys or WebAuthn is a standard API defined by the W3C that allows applications running in a web browser to manage
+public keys and register them for use with a given service provider.
+
+The typical registration scenario goes like this:
+
+1. The user creates a new account on the service. The initial credentials are usually the familiar username/password.
+2. Once registered, the user goes to their profile page and selects “create passkey”.
+3. The system displays a passkey registration form.
+4. The user fills in the form with the required information – e.g. a key label that will help select the right key
+   later – and submits it.
+5. The system saves the passkey and associates it with the user account. At the same time, the private part of this key
+   is saved on the user’s device.
+6. The passkey registration is complete.
+
+Once registered, the user can use the stored passkey to access the service. Depending on the security configuration of
+the browser and the user’s device, login will require a fingerprint scan, unlocking a smartphone, or a similar action.
+
+A passkey consists of two parts: the public key that the browser sends to the service provider and a private part that
+remains on the local device. The client-side API also ensures that a given passkey is usable only with the same site
+that registered it.
+
+## 3. Dependencies
 
 ```xml
-
 <dependency>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-web</artifactId>
-    <version>3.4.3</version>
 </dependency>
 <dependency>
-<groupId>org.springframework.boot</groupId>
-<artifactId>spring-boot-starter-security</artifactId>
-<version>3.4.3</version>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-security</artifactId>
+</dependency>
+<!-- Spring Security 7+: WebAuthn support lives in its own module -->
+<dependency>
+    <groupId>org.springframework.security</groupId>
+    <artifactId>spring-security-webauthn</artifactId>
 </dependency>
 <dependency>
-<groupId>com.webauthn4j</groupId>
-<artifactId>webauthn4j-core</artifactId>
-<version>0.28.5.RELEASE</version>
+    <groupId>com.webauthn4j</groupId>
+    <artifactId>webauthn4j-core</artifactId>
+    <version>${webauthn4j.version}</version>
 </dependency>
 ```
 
-The latest versions of these dependencies are available on Maven Central:
+> [!IMPORTANT]
+> WebAuthn support requires Spring Boot 3.4.0 or higher. Since Spring Security 7 (Spring Boot 4), the WebAuthn classes
+> were moved out of `spring-security-web` into `spring-security-webauthn`. Without it the application fails to start
+> with `NoClassDefFoundError: .../PublicKeyCredentialUserEntityRepository`.
 
-* _**spring-boot-starter-web_**
-* _**spring-boot-starter-security_**
-* _**webauthn4j-core_**
-  IMPORTANT: WebAuthn support requires Spring Boot version 3.4.0 or higher
+## 4. Spring Security Configuration
 
-4. Spring Security Configuration
-   Starting with Spring Security 6.4, which is the default version included through the spring-boot-starter-security
-   dependency, the configuration DSL comes with native support for passkeys through the webautn() method.
-    ```java
-       @Bean
-    SecurityFilterChain webauthnFilterChain(HttpSecurity http, WebAuthNProperties webAuthNProperties) {
-        return http.authorizeHttpRequests( ht -> ht.anyRequest().authenticated())
-                .formLogin(withDefaults())
-                .webAuthn(webauth ->
-                        webauth.allowedOrigins(webAuthNProperties.getAllowedOrigins())
-                                .rpId(webAuthNProperties.getRpId())
-                                .rpName(webAuthNProperties.getRpName())
-                )
-                .build();
-    }
-    
-    ```
-   This is what we get with this configuration:
+The Spring Security configuration DSL has native support for passkeys through the `webAuthn()` method
+(see [`SecurityConfig`](src/main/java/id/my/hendisantika/passkeyauth/config/SecurityConfig.java)):
 
-   A “login with passkey” button will be present on the login page
-   A registration page available at /webauthn/register
-   For proper operation, we must provide at least the following configuration attributes to the webauthn configurer:
+```java
+@Bean
+public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    http
+            .authorizeHttpRequests(req -> req.anyRequest().authenticated())
+            .formLogin(Customizer.withDefaults())
+            .webAuthn(webauthn -> webauthn
+                    .rpName("Spring Security Relying Party")
+                    .rpId("localhost")
+                    .allowedOrigins("http://localhost:8080"));
+    return http.build();
+}
+```
 
-   allowedOrigins: external URL of the site, which MUST use HTTPS, unless it uses localhost
-   rpId: Application identifier, which MUST be a valid domain name that matches the hostname part of the allowedOrigin
-   attribute
-   rpName: A user-friendly name that the browser may use during the registration and/or login process
-   This configuration, however, misses a critical aspect of passkey support: registered keys are lost upon application
-   restart. This is because, by default, Spring Security uses a memory-based implementation credential store, which is
-   not meant for production use.
+This is what we get with this configuration:
 
-   We’ll see how to fix this later on.
+- A “Sign in with a passkey” button on the login page
+- A registration page available at `/webauthn/register`
 
-5. Passkey Walk-Around
-   With the passkey configuration in place, it’s time for a quick walk-around through our application. Once we start it
-   using mvn spring-boot:run or the IDE, we can open our browser and navigate to http://localhost:8080:
+For proper operation, we must provide at least the following attributes to the WebAuthn configurer:
 
-   Login form with passkey
-   The standard login page for Spring applications will now include the “Sign in with a passkey” button. Since we
-   haven’t registered any key yet, we must log in using username/password credentials, which we’ve configured in our
-   application.yaml file: alice/changeit
+- `allowedOrigins`: external URL of the site, which MUST use HTTPS, unless it uses `localhost`
+- `rpId`: application identifier, which MUST be a valid domain name that matches the hostname part of `allowedOrigins`
+- `rpName`: a user-friendly name that the browser may use during the registration and/or login process
 
-   Welcome page
-   As expected, we’re now logged in as Alice. We can now continue to the registration page by clicking on the Register
-   PassKey link:
+This configuration misses one aspect of production passkey support: registered keys are lost upon application restart,
+because by default Spring Security uses an in-memory credential store. See [section 6](#6-passkey-repositories).
 
-   Passkey registration page
-   Here, we’ll just provide a label – baeldung-demo – and click on Register. What happens next depends on the device
-   type (desktop, mobile, tablet) and OS (Windows, Linux, Mac, Android), but in the end, it will result in a new key
-   being added to the list:
+## 5. Passkey Walk-Through
 
-   Passkey registration success
-   For instance, in Chrome on Windows, the dialog will give a choice to create a new key and store it with the browser’s
-   native password manager or use the Windows Hello functionality available on the OS.
+1. Start the application with `./mvnw spring-boot:run` or from the IDE and navigate to http://localhost:8080.
+2. The standard Spring login page now includes the “Sign in with a passkey” button. Since no key is registered yet, log
+   in with the username/password credentials (`yuji` / `1234`).
+3. Go to http://localhost:8080/webauthn/register, provide a label and click **Register**. What happens next depends on
+   the device type and OS, but in the end a new key is added to the list. For instance, Chrome on Windows offers to
+   store the key in the browser’s password manager or to use Windows Hello; macOS offers iCloud Keychain / Touch ID.
+4. Log out at http://localhost:8080/logout, then click “Sign in with a passkey” on the login form and pick the passkey.
+5. The device performs an additional authentication challenge (fingerprint, face recognition, PIN, ...). The private key
+   signs a challenge which the server validates with the stored public key, and the login completes.
 
-   Next, let’s log out of the application and try our new key. First, we navigate to http://localhost:8080/logout and
-   confirm that want to exit. Next, on the login form, we click on “Sign in with a passkey”. The browser will show a
-   dialog which allows you to select a passkey:
+## 6. Passkey Repositories
 
-   Passkey Selector
-   Once we select one of the available keys, the device will perform an additional authentication challenge. For the
-   “Windows Hello” authentication, this can be a fingerprint scan, face recognition, etc.
+To persist registered keys, provide implementations of the following interfaces:
 
-   If the authentication is successful, the user’s private key will be used to sign a challenge and send it to the
-   server, where it will be validated using the previously stored public key. Finally, if everything checks, the login
-   completes and the welcome page will be displayed as before.
+- **`PublicKeyCredentialUserEntityRepository`** – manages `PublicKeyCredentialUserEntity` instances and maps user
+  accounts managed by the `UserDetailsService` to user account identifiers (`name`, `id`, `displayName`). Both `name`
+  and `id` are assumed unique within an authentication domain; entries typically have a 1:1 relationship with the
+  accounts of the `UserDetailsService`.
+- **`UserCredentialRepository`** – manages `CredentialRecord` instances, which store the public key received from the
+  browser during registration, plus `userEntityUserId`, `label`, `lastUsed` and `created`. A `CredentialRecord` has an
+  N:1 relationship with `PublicKeyCredentialUserEntity`, e.g. `findByUserId()` returns a list.
 
-6. Passkey Repositories
-   As mentioned before, the default passkey configuration created by Spring Security doesn’t provide persistence for the
-   registered keys. To fix this, we need to provide implementations for the following interfaces:
+Spring Security also ships JDBC-based implementations (`JdbcPublicKeyCredentialUserEntityRepository`,
+`JdbcUserCredentialRepository`) that can be registered as beans.
 
-PublicKeyCredentialUserEntityRepository
-UserCredentialRepository
-6.1. PublicKeyCredentialUserEntityRepository
-This service manages PublicKeyCredentialUserEntity instances and maps user accounts managed by the standard
-UserDetailsService to user account identifiers. This entity has the following attributes:
+## 7. Testing
 
-name: A user-friendly name identifier for the account
-id: An opaque identifier for the user’s account
-displayName: An alternate version of the account name, meant to be used for display purposes
-It’s important to notice that the current implementation assumes that both name and id are unique within a given
-authentication domain.
+While it is possible to test passkey-based applications using mock requests, most failure scenarios are client-side,
+so integration tests with a real browser are more valuable. With Selenium, the `VirtualAuthenticator` feature lets the
+WebDriver simulate the authenticator:
 
-In general, we can assume that entries in this table have a 1:1 relationship with accounts managed by the standard
-UserDetailsService.
-
-The implementation, available online, uses Spring Data JDBC repositories to store those fields in the PASSKEY_USERS
-table.
-
-6.2. UserCredentialRepository
-Manages CredentialRecord instances, which stores the actual public key received from the browser as part of the
-registration process. This entity includes all the recommended properties specified in the W3C’s documentation, along
-with some additional ones:
-
-userEntityUserId: Identifier of the PublicKeyCredentialUserEntity that owns this credential
-label: user-defined label for this credential, assigned at registration time
-lastUsed: Date of last usage for this credential
-created: Date of creation of this credential
-Notice that CredentialRecord has an N:1 relationship with PublicKeyCredentialUserEntity, which reflects on the methods
-of the repository. For instance, the findByUserId() method returns a list of CredentialRecord instances.
-
-Our implementation takes this into account and uses a foreign key in the PASSKEY_CREDENTIALS table to ensure referential
-integrity.
-
-7. Testing
-   While it is possible to test passkey-based applications using mock requests, the value of those tests is somewhat
-   limited. Most failure scenarios are related to client-side issues, thus requiring integration tests that use a real
-   browser driven by an automation tool.
-
-   Here, we’ll use Selenium to implement a “happy path” scenario just to illustrate the technique. In particular, we’ll
-   use the VirtualAuthenticator feature to configure the WebDriver, allowing us to simulate interactions between the
-   registration and login page with this mechanism.
-
-   For instance, this is how we can create a new driver with a VirtualAuthenticator:
-    ```java
-    @BeforeEach
-    void setupTest() {
+```java
+@BeforeEach
+void setupTest() {
     VirtualAuthenticatorOptions options = new VirtualAuthenticatorOptions()
-    .setIsUserVerified(true)
-    .setIsUserConsenting(true)
-    .setProtocol(VirtualAuthenticatorOptions.Protocol.CTAP2)
-    .setHasUserVerification(true)
-    .setHasResidentKey(true);
-    
-        driver = new ChromeDriver();
-        authenticator = ((HasVirtualAuthenticator) driver).addVirtualAuthenticator(options);
-    }
-    ```
-   Once we get the authenticator instance, we can use it to simulate different scenarios, such as a successful or
-   unsuccessful login, registration, and so on. Our live test goes through a full cycle, consisting of the following
-   steps:
+            .setIsUserVerified(true)
+            .setIsUserConsenting(true)
+            .setProtocol(VirtualAuthenticatorOptions.Protocol.CTAP2)
+            .setHasUserVerification(true)
+            .setHasResidentKey(true);
 
-   Initial login using username/password credentials
-   Passkey registration
-   Logout
-   Login using the passkey
-8. Conclusion
-   In this tutorial, we’ve shown how to use Passkeys in a Spring Boot Web application, including the Spring Security
-   setup and adding key persistence support needed for real-world applications.
+    driver = new ChromeDriver();
+    authenticator = ((HasVirtualAuthenticator) driver).addVirtualAuthenticator(options);
+}
+```
 
-   The code backing this article is available on GitHub. Once you're logged in as a Baeldung Pro Member, start learning
-   and coding on the project.
-   announcement - icon
-   Connect with experts from the Java community, Microsoft, and partners to “Code the Future with AI” JDConf 2025, on
-   April 9 - 10.
+A full happy-path test then covers: login with username/password → passkey registration → logout → login with the
+passkey.
 
-   Dedicated local streams across North America, Europe, and Asia-Pacific will explore the latest Java AI models to
-   develop LLM apps and agents, learning best practices for app modernization with AI-assisted dev tools, learning the
-   latest in Java frameworks, security, and quite a bit more:
+## CI/CD & Dependency Updates
 
-### Image Screenshots
+- **GitHub Actions** ([`maven.yml`](.github/workflows/maven.yml)): builds and tests every push and pull request to
+  `main` on Temurin JDK 25 using `./mvnw -B verify`, and submits the Maven dependency graph on pushes to `main`.
+  It can also be triggered manually (`workflow_dispatch`).
+- **Dependabot** ([`dependabot.yml`](.github/dependabot.yml)): checks Maven dependencies and GitHub Actions daily
+  (05:00 Asia/Jakarta). Related updates are grouped (Spring Boot, Spring Security, WebAuthn4J, Maven plugins, other
+  minor/patch bumps, all GitHub Actions), labelled, and use conventional commit prefixes (`build(deps)`, `ci(deps)`).
+
+## Image Screenshots
 
 Login Page
 
@@ -236,10 +222,9 @@ Success Page
 ![Success Page](img/success.png "Success Page")
 
 Passkey Page
+
 ![Passkey Page](img/passkey1.png "Passkey Page")
 
 WebAuthn Page
 
 ![WebAuthn Page](img/webauth.png "WebAuthn Page")
-
-
