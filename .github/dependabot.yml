@@ -7,6 +7,37 @@ updates:
       time: '05:00'
       timezone: Asia/Jakarta
     open-pull-requests-limit: 10
+    target-branch: main
+    labels:
+      - dependencies
+      - java
+    commit-message:
+      prefix: "build(deps)"
+      prefix-development: "build(deps-dev)"
+      include: scope
+    groups:
+      spring-boot:
+        patterns:
+          - "org.springframework.boot*"
+      spring-security:
+        patterns:
+          - "org.springframework.security*"
+      webauthn4j:
+        patterns:
+          - "com.webauthn4j*"
+      maven-plugins:
+        patterns:
+          - "org.apache.maven.plugins*"
+      minor-and-patch:
+        update-types:
+          - minor
+          - patch
+        exclude-patterns:
+          - "org.springframework.boot*"
+          - "org.springframework.security*"
+          - "com.webauthn4j*"
+          - "org.apache.maven.plugins*"
+
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
@@ -14,3 +45,14 @@ updates:
       time: '05:00'
       timezone: Asia/Jakarta
     open-pull-requests-limit: 10
+    target-branch: main
+    labels:
+      - dependencies
+      - github_actions
+    commit-message:
+      prefix: "ci(deps)"
+      include: scope
+    groups:
+      github-actions:
+        patterns:
+          - "*"
